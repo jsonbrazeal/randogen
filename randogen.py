@@ -8,29 +8,68 @@ import random
 
 import requests
 
-API_KEY = None
+class RandoGen(object):
+    """Class to have Fun with random.org; includes random number and
+    RSA keypair generators.
+    """
 
-def fetch_randos(num_randos, min_rando, max_rando, replace, base):
-    data = {'jsonrpc':'2.0',
-            'method': 'generateIntegers',
-            'params': { 'apiKey': API_KEY,
-                        'n': num_randos,
-                        'min': min_rando,
-                        'max': max_rando,
-                        'replacement': replace,
-                        'base': base },
-            'id': random.randrange(0, 10000) }
+    API_KEY = '701b81d1-3151-4c31-b036-f30449c0f176'
 
-    print('request:')
-    print(data)
-    r = requests.post('https://api.random.org/json-rpc/1/invoke', headers={'content-type': 'application/json'}, data=json.dumps(data))
-    print('response:')
-    print(r.json())
+    def fetch_randos(self, num_randos, min_rando=0, max_rando=255, replace='True', base=10, return_bytes=False):
+        data = {'jsonrpc':'2.0',
+                'method': 'generateIntegers',
+                'params': { 'apiKey': self.API_KEY,
+                            'n': num_randos,
+                            'min': min_rando,
+                            'max': max_rando,
+                            'replacement': replace,
+                            'base': base },
+                'id': random.randrange(0, 10000) }
 
+        # print('request:')
+        # print(data)
+        r = requests.post('https://api.random.org/json-rpc/1/invoke', headers={'content-type': 'application/json'}, data=json.dumps(data))
+        randos = r.json()['result']['random']['data']
+        if return_bytes:
+            return bytearray(randos)
+        else:
+            return randos
+
+    def generate_keypair(self):
+        from Crypto.PublicKey import RSA
+        # from Crypto import Random
+        # random_generator = Random.new().read
+        random_generator = self.fetch_randos
+        private_key = RSA.generate(2048, random_generator)
+        public_key = private_key.publickey()
+        with open('./id_rsa', 'wb') as priv, open('./id_rsa.pub', 'wb') as pub:
+            priv.write(private_key.exportKey())
+            pub.write(public_key.exportKey())
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='''
+    Welcome to randogen.py help! This module will help you interact with random.org.
+    There are two main commands:
+        python randogen.py -r
+        python randogen.py -k
+    The -r option generates and prints random integers from random.org to stdout.
+    The -k option uses random integers from random.org to create an RSA keypair.
+
+    There are several options for each command, so be sure to check the help with:
+        python randogen.py -h
+        ''', formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-k', '--keypair', action='store_true',
+                        help='generate and save an RSA keypair')
+    parser.add_argument('--publicpath',
+                        default='./id_rsa.pub',
+                        help='path for generated public key')
+    parser.add_argument('--privatepath',
+                        default='./id_rsa',
+                        help='path for generated private key')
+
+    parser.add_argument('-r', '--randos', action='store_true',
+                        help='generate and print random numbers from random.org')
     parser.add_argument('--num',
                         default=10,
                         type=int,
@@ -53,4 +92,10 @@ if __name__ == '__main__':
                         help='set to prevent generator from producing the same number more than once')
     args = parser.parse_args()
 
-    fetch_randos(args.num, args.min, args.max, args.noreplacement, args.base)
+    r = RandoGen()
+    if args.keypair and args.randos:
+        print('Please specify "keypair" or "randos". Type `python randogen.py -h` for help')
+    elif args.keypair:
+        key = r.generate_keypair()
+    elif args.randos:
+        print(r.fetch_randos(args.num, args.min, args.max, args.noreplacement, args.base, return_bytes=False))
