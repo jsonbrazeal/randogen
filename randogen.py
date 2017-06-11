@@ -5,7 +5,9 @@
 
 import json
 import random
+
 import requests
+from Crypto.PublicKey import RSA
 
 class RandoGen(object):
     """Class to have Fun with random.org; includes random number and
@@ -38,7 +40,6 @@ class RandoGen(object):
             return randos
 
     def generate_keypair(self, privatepath, publicpath):
-        from Crypto.PublicKey import RSA
         random_generator = self.fetch_randos
         private_key = RSA.generate(2048, random_generator)
         public_key = private_key.publickey()
