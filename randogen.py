@@ -2,6 +2,7 @@
 
 """randogen.py
 """
+
 import json
 import random
 import requests
@@ -93,7 +94,9 @@ if __name__ == '__main__':
 
     r = RandoGen()
     if args.keypair and args.randos:
-        print('Please specify "keypair" or "randos". Type `python randogen.py -h` for help')
+        print('Please specify "--keypair" or "--randos". Type `python randogen.py -h` for help')
+    elif not args.keypair and not args.randos:
+        print('Please specify "--keypair" or "--randos". Type `python randogen.py -h` for help')
     elif args.keypair:
         key = r.generate_keypair(args.privatepath, args.publicpath)
     elif args.randos:

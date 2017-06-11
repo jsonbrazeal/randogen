@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-"""randogen.py
+"""test_randogen.py
 """
-import random
+
 import unittest
 
 from randogen import RandoGen
