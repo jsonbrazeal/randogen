@@ -2,10 +2,8 @@
 
 """randogen.py
 """
-
 import json
 import random
-
 import requests
 
 class RandoGen(object):
@@ -15,7 +13,12 @@ class RandoGen(object):
 
     API_KEY = '701b81d1-3151-4c31-b036-f30449c0f176'
 
-    def fetch_randos(self, num_randos, min_rando=0, max_rando=255, replace='True', base=10, return_bytes=False):
+    def fetch_randos(self, num_randos, min_rando=0, max_rando=255, replace='True', base=10, return_bytes=True):
+        if num_randos <= 0:
+            if return_bytes:
+                return bytearray([])
+            else:
+                return []
         data = {'jsonrpc':'2.0',
                 'method': 'generateIntegers',
                 'params': { 'apiKey': self.API_KEY,
@@ -26,8 +29,6 @@ class RandoGen(object):
                             'base': base },
                 'id': random.randrange(0, 10000) }
 
-        # print('request:')
-        # print(data)
         r = requests.post('https://api.random.org/json-rpc/1/invoke', headers={'content-type': 'application/json'}, data=json.dumps(data))
         randos = r.json()['result']['random']['data']
         if return_bytes:
@@ -35,14 +36,12 @@ class RandoGen(object):
         else:
             return randos
 
-    def generate_keypair(self):
+    def generate_keypair(self, privatepath, publicpath):
         from Crypto.PublicKey import RSA
-        # from Crypto import Random
-        # random_generator = Random.new().read
         random_generator = self.fetch_randos
         private_key = RSA.generate(2048, random_generator)
         public_key = private_key.publickey()
-        with open('./id_rsa', 'wb') as priv, open('./id_rsa.pub', 'wb') as pub:
+        with open(privatepath, 'wb') as priv, open(publicpath, 'wb') as pub:
             priv.write(private_key.exportKey())
             pub.write(public_key.exportKey())
 
@@ -96,6 +95,6 @@ if __name__ == '__main__':
     if args.keypair and args.randos:
         print('Please specify "keypair" or "randos". Type `python randogen.py -h` for help')
     elif args.keypair:
-        key = r.generate_keypair()
+        key = r.generate_keypair(args.privatepath, args.publicpath)
     elif args.randos:
         print(r.fetch_randos(args.num, args.min, args.max, args.noreplacement, args.base, return_bytes=False))
