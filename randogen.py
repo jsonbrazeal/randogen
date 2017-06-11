@@ -14,6 +14,7 @@ class RandoGen(object):
     RSA keypair generators.
     """
 
+    # including this here in the interest of time; never commit API keys for real code!
     API_KEY = '701b81d1-3151-4c31-b036-f30449c0f176'
 
     def fetch_randos(self, num_randos, min_rando=0, max_rando=255, replace='True', base=10, return_bytes=True):
